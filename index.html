@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knight Battle</title>
+  <link rel="icon" href="data:,">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #2e1f0e;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 48px;
+      padding: 24px;
+    }
+
+    /* ── board ── */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      border: 3px solid #1a0f04;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    /* ── cells ── */
+    .cell {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .cell.light { background: #f0d9b5; }
+    .cell.dark  { background: #b58863; }
+
+    /* legal-move hint dots */
+    .cell.hint::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(80, 160, 255, 0.75);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .enemy.on-hint { color: #50a0ff; }
+
+    /* ── knight ── */
+    .knight {
+      font-size: 3.8rem;
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      position: relative;
+      z-index: 1;
+      transition: filter 0.15s;
+    }
+
+    .knight.white-piece {
+      color: #ffffff;
+      text-shadow: 1px 1px 0 #333, -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333;
+    }
+
+    .knight.black-piece {
+      color: #1a1a1a;
+      text-shadow: 1px 1px 0 #ddd, -1px -1px 0 #ddd, 1px -1px 0 #ddd, -1px 1px 0 #ddd;
+    }
+
+    .knight.sliding, .enemy.sliding {
+      animation: slide-move 0.18s ease-out;
+    }
+
+    .knight.sliding { z-index: 2; }
+
+    .knight.on-enemy {
+      filter: drop-shadow(0 0 5px #ff3333) drop-shadow(0 0 14px #cc0000);
+    }
+
+    .plus-one-flash {
+      position: absolute;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ff5555;
+      text-shadow: 0 0 10px #ff0000;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+      animation: bonus-rise 1.8s ease-out forwards;
+    }
+
+    .knight.white-piece.illegal {
+      animation: glow-red-white 0.65s ease-out forwards;
+    }
+
+    .knight.black-piece.illegal {
+      animation: glow-red-black 0.65s ease-out forwards;
+    }
+
+    @keyframes slide-move {
+      from { transform: translate(var(--dx), var(--dy)); }
+      to   { transform: translate(0, 0); }
+    }
+
+    @keyframes glow-red-white {
+      0%   { filter: none; }
+      20%  { filter: drop-shadow(0 0 6px #ff2222) drop-shadow(0 0 14px #ff0000); color: #ff8888; }
+      55%  { filter: drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 22px #ff0000); color: #ff4444; }
+      100% { filter: none; color: #ffffff; }
+    }
+
+    @keyframes glow-red-black {
+      0%   { filter: none; }
+      20%  { filter: drop-shadow(0 0 6px #ff2222) drop-shadow(0 0 14px #ff0000); color: #cc2222; }
+      55%  { filter: drop-shadow(0 0 10px #ff4444) drop-shadow(0 0 22px #ff0000); color: #aa0000; }
+      100% { filter: none; color: #1a1a1a; }
+    }
+
+    /* ── enemies ── */
+    .enemy {
+      font-size: 2.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+      position: relative;
+      z-index: 1;
+      color: #cc2200;
+    }
+
+    .enemy.hit {
+      animation: enemy-hit 0.4s ease-out;
+    }
+
+    @keyframes enemy-hit {
+      0%   { filter: none; color: #cc2200; }
+      40%  { filter: drop-shadow(0 0 8px #ffaa00) drop-shadow(0 0 18px #ff5500); color: #ffcc55; }
+      100% { filter: none; color: #cc2200; }
+    }
+
+    .enemy.dying {
+      animation: enemy-die 0.25s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes enemy-die {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(0.3); }
+    }
+
+    /* ── right panel ── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+      padding-top: 4px;
+      min-width: 200px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      letter-spacing: 5px;
+      color: #c8902a;
+      text-transform: uppercase;
+    }
+
+    /* ── position display ── */
+    .position-label {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7a6040;
+    }
+
+    .position-value {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #c8902a;
+      letter-spacing: 4px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* ── turn counter ── */
+    .turn-label {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7a6040;
+    }
+
+    .turn-value {
+      font-size: 4rem;
+      font-weight: 700;
+      color: #e8d08a;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* ── timer ── */
+    .timer-label {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7a6040;
+    }
+
+    .timer-value {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #e8d08a;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* ── input ── */
+    .input-label {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7a6040;
+      margin-bottom: 6px;
+    }
+
+    .move-display {
+      background: #0e0904;
+      border: 1px solid #4a3010;
+      border-radius: 6px;
+      color: #f0d9b5;
+      font-size: 1.2rem;
+      padding: 8px 14px;
+      text-align: center;
+      width: 100px;
+      letter-spacing: 4px;
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .move-display:empty::before {
+      content: 'a1–h8';
+      color: #3a2810;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    /* ── message ── */
+    .message {
+      font-size: 0.82rem;
+      color: #e05050;
+      letter-spacing: 1px;
+      min-height: 1.2em;
+      transition: opacity 0.3s;
+    }
+
+    .message.hidden { opacity: 0; }
+
+    /* ── new game button ── */
+    .new-game-btn {
+      padding: 8px 20px;
+      background: #1a0e04;
+      color: #c8902a;
+      border: 1px solid #5a3a10;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .new-game-btn:hover { background: #261504; border-color: #9a6020; }
+
+    /* ── seed bar ── */
+    .seed-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .seed-label {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #a88050;
+    }
+
+    .seed-value {
+      font-size: 0.78rem;
+      font-family: monospace;
+      color: #e8c080;
+      letter-spacing: 1px;
+    }
+
+    .seed-copy-btn {
+      font-size: 0.65rem;
+      color: #a88050;
+      background: none;
+      border: 1px solid #7a5828;
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .seed-copy-btn:hover { color: #e8c080; border-color: #b08040; }
+    .seed-copy-btn.copied { color: #7ab87a; border-color: #4a7a4a; }
+
+    /* ── modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal {
+      background: #160b02;
+      border: 1px solid #5a3a10;
+      border-radius: 10px;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 270px;
+    }
+
+    .modal-title {
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #c8902a;
+    }
+
+    .seed-modal-input {
+      background: #0e0904;
+      border: 1px solid #4a3010;
+      border-radius: 6px;
+      color: #f0d9b5;
+      font-size: 1.1rem;
+      font-family: monospace;
+      padding: 8px 12px;
+      letter-spacing: 3px;
+      text-align: center;
+      outline: none;
+      caret-color: #c8902a;
+      transition: border-color 0.15s;
+    }
+
+    .seed-modal-input:focus { border-color: #c8902a; }
+    .seed-modal-input.error { border-color: #cc2200; }
+
+    .modal-error {
+      font-size: 0.75rem;
+      color: #cc2200;
+      letter-spacing: 1px;
+      min-height: 1em;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.15s;
+    }
+
+    .modal-btn-primary {
+      background: #2a1804;
+      color: #c8902a;
+      border: 1px solid #5a3a10;
+    }
+
+    .modal-btn-primary:hover { background: #3a2408; }
+
+    .modal-btn-secondary {
+      background: none;
+      color: #6a5030;
+      border: 1px solid #3a2810;
+    }
+
+    .modal-btn-secondary:hover { color: #9a7050; border-color: #5a4030; }
+
+    /* ── high scores ── */
+    .scores-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .scores-label {
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #7a6040;
+    }
+
+    .score-entry {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #6a5030;
+    }
+
+    .score-entry.gold   { color: #e2c97e; }
+    .score-entry.silver { color: #999; }
+    .score-entry.bronze { color: #b07040; }
+
+    .score-rank {
+      font-size: 0.65rem;
+      width: 12px;
+      text-align: right;
+    }
+
+    .score-moves {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .score-moves-label {
+      font-size: 0.7rem;
+      color: inherit;
+      opacity: 0.7;
+    }
+
+    .score-seed {
+      font-size: 0.65rem;
+      font-family: monospace;
+      color: inherit;
+      opacity: 0.55;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .score-new {
+      font-size: 0.65rem;
+      color: #ffd700;
+      letter-spacing: 1px;
+    }
+
+    /* ── bonus flash ── */
+    .bonus-flash {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #ffd700;
+      text-shadow: 0 0 12px #ff8c00;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+      animation: bonus-rise 3s ease-out forwards;
+    }
+
+    @keyframes bonus-rise {
+      0%   { opacity: 0;   transform: translate(-50%, -50%); }
+      12%  { opacity: 1; }
+      65%  { opacity: 1;   transform: translate(-50%, calc(-50% - 28px)); }
+      100% { opacity: 0;   transform: translate(-50%, calc(-50% - 48px)); }
+    }
+
+    /* ── win panel ── */
+    .win-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fade-in 0.5s ease-out;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .win-title {
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      color: #ffd700;
+      text-transform: uppercase;
+    }
+
+    .win-row {
+      font-size: 0.82rem;
+      color: #a08050;
+      letter-spacing: 1px;
+    }
+
+    .win-row span {
+      color: #e8d08a;
+    }
+
+    .win-score {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #ffd700;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-top: 4px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+    <div class="seed-bar">
+      <span class="seed-label">Seed</span>
+      <span class="seed-value" id="seedValue"></span>
+      <button class="seed-copy-btn" id="seedCopyBtn">copy</button>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <h1>Knight Battle</h1>
+
+    <div>
+      <div class="position-label">Position</div>
+      <div class="position-value" id="positionDisplay">e4</div>
+    </div>
+
+    <div>
+      <div class="turn-label">Turn</div>
+      <div class="turn-value" id="turnCounter">0</div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <div class="timer-label">Time</div>
+        <button class="seed-copy-btn" id="timerToggleBtn">Show Timer</button>
+      </div>
+      <div class="timer-value" id="timerValue" style="display:none">0:00.0</div>
+    </div>
+
+    <div id="inputGroup">
+      <div class="input-label">Move to</div>
+      <div class="move-display" id="moveDisplay"></div>
+    </div>
+
+    <div class="message hidden" id="message">Illegal move</div>
+
+    <div class="win-panel" id="winPanel" style="display:none"></div>
+
+    <button class="new-game-btn" id="newGameBtn">New Game</button>
+    <button class="new-game-btn" id="loadSeedBtn">Load from seed</button>
+    <button class="new-game-btn" id="hintsToggleBtn">Hints: OFF</button>
+
+    <div class="scores-section">
+      <div class="scores-label">Best Moves</div>
+      <div id="scoresByMoves"></div>
+    </div>
+    <div class="scores-section">
+      <div class="scores-label">Fastest Times</div>
+      <div id="scoresByTime"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="seedModal" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Load from Seed</div>
+    <input class="seed-modal-input" id="seedModalInput" placeholder="a3f9-2c1b"
+           maxlength="9" spellcheck="false" autocomplete="off">
+    <div class="modal-error" id="seedModalError" style="opacity:0">Invalid seed</div>
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-primary" id="seedLoadBtn">Load</button>
+      <button class="modal-btn modal-btn-secondary" id="seedCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FILE_NAMES = ['a','b','c','d','e','f','g','h'];
+
+  // ── high scores ── bump version string whenever game mechanics change
+  const SCORES_KEY = 'knightBattle_scores_v4';
+  const MAX_SCORES = 5;
+
+  function loadScores() {
+    try { return JSON.parse(localStorage.getItem(SCORES_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveScore(moves, timeMs, seed) {
+    const scores = loadScores();
+    scores.push({ moves, timeMs, seed });
+    const byMoves = [...scores].sort((a, b) => a.moves - b.moves).slice(0, MAX_SCORES);
+    const byTime  = [...scores].sort((a, b) => a.timeMs - b.timeMs).slice(0, MAX_SCORES);
+    const seen = new Set();
+    const kept = [];
+    for (const s of [...byMoves, ...byTime]) {
+      const k = `${s.moves}-${s.timeMs}-${s.seed}`;
+      if (!seen.has(k)) { seen.add(k); kept.push(s); }
+    }
+    localStorage.setItem(SCORES_KEY, JSON.stringify(kept));
+  }
+
+  function renderScores(highlightEntry = null) {
+    const scores = loadScores();
+    const medals = ['gold', 'silver', 'bronze'];
+
+    function renderList(id, sorted, primaryKey) {
+      const list = document.getElementById(id);
+      if (!list) return;
+      if (sorted.length === 0) { list.innerHTML = '<div class="score-entry">—</div>'; return; }
+      list.innerHTML = sorted.map((s, i) => {
+        const medal = medals[i] || '';
+        const isNew = highlightEntry && s.moves === highlightEntry.moves && s.timeMs === highlightEntry.timeMs;
+        const seedStr = s.seed != null ? seedToString(s.seed) : '';
+        const primary   = primaryKey === 'moves' ? `<span class="score-moves">${s.moves}</span><span class="score-moves-label">mv</span>` : `<span class="score-moves">${formatTime(s.timeMs)}</span>`;
+        const secondary = primaryKey === 'moves' ? `<span class="score-moves-label">${formatTime(s.timeMs)}</span>` : `<span class="score-moves-label">${s.moves}mv</span>`;
+        return `<div class="score-entry ${medal}">
+          <span class="score-rank">${i + 1}</span>
+          ${primary}${secondary}
+          <span class="score-seed">(${seedStr})</span>
+          ${isNew ? '<span class="score-new">new</span>' : ''}
+        </div>`;
+      }).join('');
+    }
+
+    const byMoves = [...scores].sort((a, b) => a.moves - b.moves).slice(0, MAX_SCORES);
+    const byTime  = [...scores].sort((a, b) => a.timeMs - b.timeMs).slice(0, MAX_SCORES);
+    renderList('scoresByMoves', byMoves, 'moves');
+    renderList('scoresByTime',  byTime,  'time');
+  }
+
+  // ── seeded PRNG (mulberry32) ───────────────────────────────────────────────
+  function mulberry32(seed) {
+    return function() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function seedToString(seed) {
+    const h = (seed >>> 0).toString(16).padStart(8, '0');
+    return `${h.slice(0, 4)}-${h.slice(4)}`;
+  }
+
+  function stringToSeed(str) {
+    const h = str.replace(/[-\s]/g, '').toLowerCase();
+    if (!/^[0-9a-f]{8}$/.test(h)) return null;
+    return parseInt(h, 16) >>> 0;
+  }
+
+  function updateSeedDisplay() {
+    document.getElementById('seedValue').textContent = seedToString(currentSeed);
+  }
+
+  function formatTime(ms) {
+    const tenths = Math.floor(ms / 100) % 10;
+    const secs   = Math.floor(ms / 1000) % 60;
+    const mins   = Math.floor(ms / 60000);
+    return `${mins}:${String(secs).padStart(2, '0')}.${tenths}`;
+  }
+
+  function updateTimerDisplay() {
+    document.getElementById('timerValue').textContent = formatTime(elapsedMs);
+  }
+
+  function startTimer() {
+    if (timerStarted) return;
+    timerStarted = true;
+    const t0 = Date.now();
+    timerInterval = setInterval(() => {
+      elapsedMs = Date.now() - t0;
+      updateTimerDisplay();
+    }, 100);
+  }
+
+  function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  // ── state ──────────────────────────────────────────────────────────────────
+  const SLIDE_MS = 180;
+  const GLOW_MS  = 400;
+  const FADE_MS  = 250;
+
+  let kFile, kRank, turnCount, pieceColor, enemies, gameOver, typedInput, currentSeed, msgTimer, showHints = false;
+  let timerInterval, elapsedMs, timerStarted;
+
+  function initState(seed = null) {
+    currentSeed = seed ?? (Math.random() * 0x100000000 >>> 0);
+    const rand = mulberry32(currentSeed);
+
+    pieceColor = rand() < 0.5 ? 'white' : 'black';
+    kFile = Math.floor(rand() * 8) + 1;
+    kRank = Math.floor(rand() * 8) + 1;
+    turnCount = 0;
+    gameOver = false;
+    typedInput = '';
+    clearInterval(timerInterval);
+    timerInterval = null;
+    elapsedMs = 0;
+    timerStarted = false;
+
+    enemies = [];
+    const occupied = new Set([`${kFile}-${kRank}`]);
+    while (enemies.length < 16) {
+      const f = Math.floor(rand() * 8) + 1;
+      const r = Math.floor(rand() * 8) + 1;
+      const key = `${f}-${r}`;
+      if (!occupied.has(key)) {
+        occupied.add(key);
+        enemies.push({ file: f, rank: r, health: 3 });
+      }
+    }
+  }
+
+  // ── coordinate helpers ─────────────────────────────────────────────────────
+  function toAlgebraic(f, r) { return FILE_NAMES[f - 1] + r; }
+
+  function legalMoves(f, r) {
+    const deltas = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    return deltas
+      .map(([df, dr]) => ({ file: f + df, rank: r + dr }))
+      .filter(sq => sq.file >= 1 && sq.file <= 8 && sq.rank >= 1 && sq.rank <= 8);
+  }
+
+  function isLegal(f, r) {
+    return legalMoves(kFile, kRank).some(sq => sq.file === f && sq.rank === r);
+  }
+
+  // ── board construction ─────────────────────────────────────────────────────
+  function buildBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+
+    const ranks = pieceColor === 'white' ? [8,7,6,5,4,3,2,1] : [1,2,3,4,5,6,7,8];
+    const files = pieceColor === 'white' ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
+
+    for (const r of ranks) {
+      for (const f of files) {
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + ((f + r) % 2 === 0 ? 'dark' : 'light');
+        cell.id = `sq-${f}-${r}`;
+        board.appendChild(cell);
+      }
+    }
+  }
+
+  // ── rendering ──────────────────────────────────────────────────────────────
+  function applySlide(el, fromFile, fromRank, toCell) {
+    const fromCell = document.getElementById(`sq-${fromFile}-${fromRank}`);
+    if (!fromCell) return;
+    const fr = fromCell.getBoundingClientRect();
+    const tr = toCell.getBoundingClientRect();
+    el.style.setProperty('--dx', `${fr.left - tr.left}px`);
+    el.style.setProperty('--dy', `${fr.top  - tr.top}px`);
+    el.classList.add('sliding');
+  }
+
+  function render(illegal = false, knightFrom = null, enemyMoves = null, attackedEnemies = null) {
+    document.querySelectorAll('.knight').forEach(el => el.remove());
+    document.querySelectorAll('.enemy:not(.dying)').forEach(el => el.remove());
+    document.querySelectorAll('.cell').forEach(el => el.classList.remove('hint'));
+
+    enemies.forEach(e => {
+      if (e.file === kFile && e.rank === kRank) return; // hidden under knight
+      const cell = document.getElementById(`sq-${e.file}-${e.rank}`);
+      if (!cell) return;
+      const el = document.createElement('span');
+      el.className = 'enemy';
+      el.textContent = e.health;
+      if (attackedEnemies?.includes(e)) el.classList.add('hit');
+      const moved = enemyMoves?.find(m => m.enemy === e);
+      if (moved) applySlide(el, moved.fromFile, moved.fromRank, cell);
+      cell.appendChild(el);
+    });
+
+    if (showHints && !gameOver) {
+      legalMoves(kFile, kRank).forEach(({ file, rank }) => {
+        const cell = document.getElementById(`sq-${file}-${rank}`);
+        if (!cell) return;
+        const enemyEl = cell.querySelector('.enemy');
+        if (enemyEl) enemyEl.classList.add('on-hint');
+        else cell.classList.add('hint');
+      });
+    }
+
+    const cell = document.getElementById(`sq-${kFile}-${kRank}`);
+    if (!cell) return;
+
+    const knight = document.createElement('span');
+    knight.className = `knight ${pieceColor}-piece`;
+    knight.textContent = '♞';
+
+    if (illegal) {
+      knight.classList.add('illegal');
+    } else if (knightFrom) {
+      applySlide(knight, knightFrom.file, knightFrom.rank, cell);
+    }
+    if (enemies.some(e => e.file === kFile && e.rank === kRank))
+      knight.classList.add('on-enemy');
+
+    cell.appendChild(knight);
+    document.getElementById('positionDisplay').textContent = toAlgebraic(kFile, kRank);
+    document.getElementById('turnCounter').textContent = turnCount;
+  }
+
+  // ── message flash ──────────────────────────────────────────────────────────
+  function flashMessage(text) {
+    const el = document.getElementById('message');
+    el.textContent = text;
+    el.classList.remove('hidden');
+    clearTimeout(msgTimer);
+    msgTimer = setTimeout(() => el.classList.add('hidden'), 1400);
+  }
+
+  // ── move handling ──────────────────────────────────────────────────────────
+  function damageEnemies(exclude = null) {
+    const reachable = new Set(legalMoves(kFile, kRank).map(({ file, rank }) => `${file}-${rank}`));
+    const attacked = [];
+    enemies.forEach(e => {
+      if (e === exclude) return;
+      if (reachable.has(`${e.file}-${e.rank}`)) { e.health--; attacked.push(e); }
+    });
+    return attacked;
+  }
+
+  // ── scoring ────────────────────────────────────────────────────────────────
+  const FORK_LABELS = ['','','Fork','Triple Fork','Quadruple Fork','Quintuple Fork','Sextuple Fork'];
+
+  function forkLabel(hits) {
+    return (FORK_LABELS[hits] ?? `${hits}-way Fork`) + '!';
+  }
+
+  function showForkBonus(hits) {
+    const el = document.createElement('div');
+    el.className = 'bonus-flash';
+    el.textContent = forkLabel(hits);
+    document.getElementById('board').appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }
+
+  function showPlusOne() {
+    const cell = document.getElementById(`sq-${kFile}-${kRank}`);
+    const el = document.createElement('div');
+    el.className = 'plus-one-flash';
+    el.textContent = '+1';
+    if (cell) {
+      el.style.left = `${cell.offsetLeft + 30}px`; // horizontal center of cell
+      el.style.top  = `${cell.offsetTop  + 30}px`; // vertical center of cell
+    }
+    document.getElementById('board').appendChild(el);
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }
+
+  function showWin() {
+    gameOver = true;
+    stopTimer();
+    document.getElementById('inputGroup').style.display = 'none';
+    document.getElementById('message').classList.add('hidden');
+
+    const panel = document.getElementById('winPanel');
+    saveScore(turnCount, elapsedMs, currentSeed);
+    panel.innerHTML = `
+      <div class="win-title">Victory!</div>
+      <div class="win-row">moves — <span>${turnCount}</span></div>
+      <div class="win-row">time — <span>${formatTime(elapsedMs)}</span></div>`;
+    panel.style.display = 'flex';
+    renderScores({ moves: turnCount, timeMs: elapsedMs });
+  }
+
+  function moveSomeEnemies(toMove, extraOccupied = []) {
+    if (toMove.length === 0) return [];
+    const kingDeltas = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+    const occupied = new Set(enemies.map(e => `${e.file}-${e.rank}`));
+    occupied.add(`${kFile}-${kRank}`);
+    extraOccupied.forEach(sq => occupied.add(sq));
+
+    const results = [];
+    for (const enemy of toMove) {
+      const dests = kingDeltas
+        .map(([df, dr]) => ({ file: enemy.file + df, rank: enemy.rank + dr }))
+        .filter(sq => sq.file >= 1 && sq.file <= 8 && sq.rank >= 1 && sq.rank <= 8
+                      && !occupied.has(`${sq.file}-${sq.rank}`));
+      if (dests.length === 0) continue;
+      const dest = dests[Math.floor(Math.random() * dests.length)];
+      const fromFile = enemy.file;
+      const fromRank = enemy.rank;
+      occupied.delete(`${enemy.file}-${enemy.rank}`);
+      occupied.add(`${dest.file}-${dest.rank}`);
+      enemy.file = dest.file;
+      enemy.rank = dest.rank;
+      results.push({ enemy, fromFile, fromRank });
+    }
+    return results;
+  }
+
+  function tryMove(toFile, toRank) {
+    if (gameOver || toFile === kFile && toRank === kRank) return;
+
+    if (isLegal(toFile, toRank)) {
+      startTimer();
+      const fromFile = kFile, fromRank = kRank;
+      const wasResting = enemies.find(e => e.file === fromFile && e.rank === fromRank);
+      kFile = toFile;
+      kRank = toRank;
+      turnCount++;
+
+      const landed = enemies.find(e => e.file === kFile && e.rank === kRank);
+      if (landed) { landed.health++; showPlusOne(); }
+
+      const attacked = damageEnemies(wasResting);
+      if (attacked.length >= 2) showForkBonus(attacked.length);
+
+      // Phase 1: knight slides
+      render(false, { file: fromFile, rank: fromRank }, null, null);
+
+      setTimeout(() => {
+        // Phase 2: attacked enemies glow (skip if nothing was hit)
+        if (attacked.length > 0) render(false, null, null, attacked);
+
+        const afterGlow = () => {
+          // Phase 3: dead enemies shrink away, survivors slide simultaneously
+          const deadSquares = enemies.filter(e => e.health <= 0).map(e => `${e.file}-${e.rank}`);
+          enemies.filter(e => e.health <= 0).forEach(e => {
+            const el = document.getElementById(`sq-${e.file}-${e.rank}`)?.querySelector('.enemy');
+            if (el) {
+              el.classList.add('dying');
+              el.addEventListener('animationend', () => el.remove(), { once: true });
+            }
+          });
+          enemies = enemies.filter(e => e.health > 0);
+
+          if (enemies.length === 0) {
+            setTimeout(() => { render(false); showWin(); }, FADE_MS);
+          } else {
+            const survivingAttacked = attacked.filter(e => e.health > 0);
+          const enemyMoves = moveSomeEnemies(survivingAttacked, deadSquares);
+            render(false, null, enemyMoves);
+          }
+        };
+
+        if (attacked.length > 0) setTimeout(afterGlow, GLOW_MS);
+        else afterGlow();
+      }, SLIDE_MS);
+    } else {
+      flashMessage('Not a legal knight move');
+      render(true);
+    }
+  }
+
+  // ── new game / load seed ───────────────────────────────────────────────────
+  function startGame(seed = null) {
+    initState(seed);
+    buildBoard();
+    render(false);
+    document.getElementById('message').classList.add('hidden');
+    document.getElementById('winPanel').style.display = 'none';
+    document.getElementById('inputGroup').style.display = '';
+    typedInput = '';
+    updateMoveDisplay();
+    updateSeedDisplay();
+    updateTimerDisplay();
+  }
+
+  function newGame() { startGame(); }
+
+  document.getElementById('newGameBtn').addEventListener('click', newGame);
+
+  document.getElementById('timerToggleBtn').addEventListener('click', () => {
+    const val = document.getElementById('timerValue');
+    const btn = document.getElementById('timerToggleBtn');
+    const hidden = val.style.display === 'none';
+    val.style.display = hidden ? '' : 'none';
+    btn.textContent = hidden ? 'Hide Timer' : 'Show Timer';
+  });
+
+  document.getElementById('hintsToggleBtn').addEventListener('click', () => {
+    showHints = !showHints;
+    document.getElementById('hintsToggleBtn').textContent = showHints ? 'Hints: ON' : 'Hints: OFF';
+    render(false);
+  });
+
+  // ── seed copy ──────────────────────────────────────────────────────────────
+  document.getElementById('seedCopyBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(seedToString(currentSeed)).catch(() => {});
+    const btn = document.getElementById('seedCopyBtn');
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  });
+
+  // ── seed modal ─────────────────────────────────────────────────────────────
+  function openSeedModal() {
+    const input = document.getElementById('seedModalInput');
+    input.value = '';
+    input.classList.remove('error');
+    document.getElementById('seedModalError').style.opacity = '0';
+    document.getElementById('seedModal').style.display = 'flex';
+    setTimeout(() => input.focus(), 30);
+  }
+
+  function closeSeedModal() {
+    document.getElementById('seedModal').style.display = 'none';
+  }
+
+  function loadFromSeed() {
+    const input = document.getElementById('seedModalInput');
+    const seed = stringToSeed(input.value.trim());
+    if (seed === null) {
+      input.classList.add('error');
+      document.getElementById('seedModalError').style.opacity = '1';
+      return;
+    }
+    closeSeedModal();
+    startGame(seed);
+  }
+
+  document.getElementById('loadSeedBtn').addEventListener('click', openSeedModal);
+  document.getElementById('seedCancelBtn').addEventListener('click', closeSeedModal);
+  document.getElementById('seedLoadBtn').addEventListener('click', loadFromSeed);
+  document.getElementById('seedModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeSeedModal();
+  });
+  document.getElementById('seedModalInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadFromSeed();
+    if (e.key === 'Escape') closeSeedModal();
+  });
+
+  // ── keyboard input ─────────────────────────────────────────────────────────
+  function updateMoveDisplay() {
+    document.getElementById('moveDisplay').textContent = typedInput;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (gameOver) return;
+    if (document.getElementById('seedModal').style.display !== 'none') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    if (e.key === 'Backspace') {
+      typedInput = typedInput.slice(0, -1);
+      updateMoveDisplay();
+      return;
+    }
+
+    if (e.key.length !== 1) return;
+    const ch = e.key.toLowerCase();
+
+    if (typedInput.length === 0) {
+      if (!'abcdefgh'.includes(ch)) return; // silently ignore non-file keys
+      typedInput = ch;
+      updateMoveDisplay();
+    } else {
+      typedInput += ch;
+      updateMoveDisplay();
+      const m = typedInput.match(/^([a-h])([1-8])$/);
+      if (m) {
+        typedInput = '';
+        updateMoveDisplay();
+        tryMove(m[1].charCodeAt(0) - 96, parseInt(m[2]));
+      } else {
+        typedInput = '';
+        updateMoveDisplay();
+        flashMessage('Not a legal knight move');
+        render(true);
+      }
+    }
+  });
+
+  // ── init ───────────────────────────────────────────────────────────────────
+  initState();
+  buildBoard();
+  render(false);
+  renderScores();
+  updateSeedDisplay();
+</script>
+</body>
+</html>
