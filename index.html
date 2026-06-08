@@ -9,7 +9,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #2e1f0e;
+      background: #484848;
       color: #eee;
       font-family: system-ui, sans-serif;
       display: flex;
@@ -31,8 +31,6 @@
       display: grid;
       grid-template-columns: repeat(8, 60px);
       grid-template-rows: repeat(8, 60px);
-      border: 3px solid #1a0f04;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.8);
       position: relative;
     }
 
@@ -46,8 +44,8 @@
       position: relative;
     }
 
-    .cell.light { background: #f0d9b5; }
-    .cell.dark  { background: #b58863; }
+    .cell.light { background: #d0d0d0; }
+    .cell.dark  { background: #676767; }
 
     /* legal-move hint dots */
     .cell.hint::after {
@@ -101,8 +99,8 @@
       position: absolute;
       font-size: 1.4rem;
       font-weight: 700;
-      color: #ff5555;
-      text-shadow: 0 0 10px #ff0000;
+      color: #ff7800;
+      text-shadow: 0 0 10px #ff7800;
       pointer-events: none;
       white-space: nowrap;
       z-index: 100;
@@ -146,7 +144,7 @@
       pointer-events: none;
       position: relative;
       z-index: 1;
-      color: #cc2200;
+      color: #ff7800;
     }
 
     .enemy.hit {
@@ -154,9 +152,9 @@
     }
 
     @keyframes enemy-hit {
-      0%   { filter: none; color: #cc2200; }
-      40%  { filter: drop-shadow(0 0 8px #ffaa00) drop-shadow(0 0 18px #ff5500); color: #ffcc55; }
-      100% { filter: none; color: #cc2200; }
+      0%   { filter: none; color: #ff7800; }
+      40%  { filter: drop-shadow(0 0 8px #ff7800) drop-shadow(0 0 18px #ff7800); color: #ff7800; }
+      100% { filter: none; color: #ff7800; }
     }
 
     .enemy.dying {
@@ -182,7 +180,7 @@
     h1 {
       font-size: 1.5rem;
       letter-spacing: 5px;
-      color: #c8902a;
+      color: #ff7800;
       text-transform: uppercase;
     }
 
@@ -191,13 +189,13 @@
       font-size: 0.65rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #7a6040;
+      color: #808080;
     }
 
     .position-value {
       font-size: 2.4rem;
       font-weight: 700;
-      color: #c8902a;
+      color: #ff7800;
       letter-spacing: 4px;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -208,13 +206,13 @@
       font-size: 0.65rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #7a6040;
+      color: #808080;
     }
 
     .turn-value {
       font-size: 4rem;
       font-weight: 700;
-      color: #e8d08a;
+      color: #ff7800;
       letter-spacing: -1px;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -225,13 +223,13 @@
       font-size: 0.65rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #7a6040;
+      color: #808080;
     }
 
     .timer-value {
       font-size: 2.4rem;
       font-weight: 700;
-      color: #e8d08a;
+      color: #ff7800;
       letter-spacing: -1px;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -242,15 +240,15 @@
       font-size: 0.65rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #7a6040;
+      color: #808080;
       margin-bottom: 6px;
     }
 
     .move-display {
-      background: #0e0904;
-      border: 1px solid #4a3010;
+      background: #111111;
+      border: 1px solid #383838;
       border-radius: 6px;
-      color: #f0d9b5;
+      color: #d0d0d0;
       font-size: 1.2rem;
       padding: 8px 14px;
       text-align: center;
@@ -264,7 +262,7 @@
 
     .move-display:empty::before {
       content: 'a1–h8';
-      color: #3a2810;
+      color: #333333;
       font-size: 0.85rem;
       letter-spacing: 1px;
     }
@@ -272,7 +270,7 @@
     /* ── message ── */
     .message {
       font-size: 0.82rem;
-      color: #e05050;
+      color: #ff7800;
       letter-spacing: 1px;
       min-height: 1.2em;
       transition: opacity 0.3s;
@@ -283,9 +281,9 @@
     /* ── new game button ── */
     .new-game-btn {
       padding: 8px 20px;
-      background: #1a0e04;
-      color: #c8902a;
-      border: 1px solid #5a3a10;
+      background: #1a1a1a;
+      color: #ff7800;
+      border: 1px solid #444444;
       border-radius: 6px;
       font-size: 0.85rem;
       cursor: pointer;
@@ -293,7 +291,7 @@
       transition: background 0.15s, border-color 0.15s;
     }
 
-    .new-game-btn:hover { background: #261504; border-color: #9a6020; }
+    .new-game-btn:hover { background: #252525; border-color: #ff7800; }
 
     /* ── seed bar ── */
     .seed-bar {
@@ -307,21 +305,21 @@
       font-size: 0.65rem;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #a88050;
+      color: #939393;
     }
 
     .seed-value {
       font-size: 0.78rem;
       font-family: monospace;
-      color: #e8c080;
+      color: #ff7800;
       letter-spacing: 1px;
     }
 
     .seed-copy-btn {
       font-size: 0.65rem;
-      color: #a88050;
+      color: #939393;
       background: none;
-      border: 1px solid #7a5828;
+      border: 1px solid #555555;
       border-radius: 4px;
       padding: 2px 7px;
       cursor: pointer;
@@ -329,8 +327,54 @@
       transition: color 0.15s, border-color 0.15s;
     }
 
-    .seed-copy-btn:hover { color: #e8c080; border-color: #b08040; }
+    .seed-copy-btn:hover { color: #ff7800; border-color: #888888; }
     .seed-copy-btn.copied { color: #7ab87a; border-color: #4a7a4a; }
+
+    /* ── help button ── */
+    .help-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #555555;
+      background: none;
+      color: #939393;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, border-color 0.15s;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .help-btn:hover { color: #ff7800; border-color: #888888; }
+
+    /* ── help modal ── */
+    .help-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      color: #a0a0a0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
+    .help-body p em {
+      color: #ff7800;
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    .help-play-btn {
+      margin-top: 6px;
+      padding: 11px;
+      font-size: 1rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
 
     /* ── modal ── */
     .modal-overlay {
@@ -344,8 +388,8 @@
     }
 
     .modal {
-      background: #160b02;
-      border: 1px solid #5a3a10;
+      background: #484848;
+      border: 1px solid #444444;
       border-radius: 10px;
       padding: 28px 32px;
       display: flex;
@@ -358,30 +402,30 @@
       font-size: 0.85rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #c8902a;
+      color: #ff7800;
     }
 
     .seed-modal-input {
-      background: #0e0904;
-      border: 1px solid #4a3010;
+      background: #111111;
+      border: 1px solid #383838;
       border-radius: 6px;
-      color: #f0d9b5;
+      color: #d0d0d0;
       font-size: 1.1rem;
       font-family: monospace;
       padding: 8px 12px;
       letter-spacing: 3px;
       text-align: center;
       outline: none;
-      caret-color: #c8902a;
+      caret-color: #ff7800;
       transition: border-color 0.15s;
     }
 
-    .seed-modal-input:focus { border-color: #c8902a; }
-    .seed-modal-input.error { border-color: #cc2200; }
+    .seed-modal-input:focus { border-color: #ff7800; }
+    .seed-modal-input.error { border-color: #ff7800; }
 
     .modal-error {
       font-size: 0.75rem;
-      color: #cc2200;
+      color: #ff7800;
       letter-spacing: 1px;
       min-height: 1em;
     }
@@ -402,20 +446,20 @@
     }
 
     .modal-btn-primary {
-      background: #2a1804;
-      color: #c8902a;
-      border: 1px solid #5a3a10;
+      background: #222222;
+      color: #ff7800;
+      border: 1px solid #444444;
     }
 
-    .modal-btn-primary:hover { background: #3a2408; }
+    .modal-btn-primary:hover { background: #2a2a2a; }
 
     .modal-btn-secondary {
       background: none;
-      color: #6a5030;
-      border: 1px solid #3a2810;
+      color: #666666;
+      border: 1px solid #333333;
     }
 
-    .modal-btn-secondary:hover { color: #9a7050; border-color: #5a4030; }
+    .modal-btn-secondary:hover { color: #939393; border-color: #555555; }
 
     /* ── high scores ── */
     .scores-section {
@@ -428,7 +472,7 @@
       font-size: 0.65rem;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: #7a6040;
+      color: #808080;
     }
 
     .score-entry {
@@ -436,12 +480,12 @@
       align-items: baseline;
       gap: 8px;
       font-size: 0.82rem;
-      color: #6a5030;
+      color: #666666;
     }
 
-    .score-entry.gold   { color: #e2c97e; }
+    .score-entry.gold   { color: #ff7800; }
     .score-entry.silver { color: #999; }
-    .score-entry.bronze { color: #b07040; }
+    .score-entry.bronze { color: #ff7800; }
 
     .score-rank {
       font-size: 0.65rem;
@@ -471,7 +515,7 @@
 
     .score-new {
       font-size: 0.65rem;
-      color: #ffd700;
+      color: #ff7800;
       letter-spacing: 1px;
     }
 
@@ -483,8 +527,8 @@
       font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: 2px;
-      color: #ffd700;
-      text-shadow: 0 0 12px #ff8c00;
+      color: #ff7800;
+      text-shadow: 0 0 12px #ff7800;
       pointer-events: none;
       white-space: nowrap;
       z-index: 100;
@@ -514,24 +558,24 @@
     .win-title {
       font-size: 1.1rem;
       letter-spacing: 4px;
-      color: #ffd700;
+      color: #ff7800;
       text-transform: uppercase;
     }
 
     .win-row {
       font-size: 0.82rem;
-      color: #a08050;
+      color: #939393;
       letter-spacing: 1px;
     }
 
     .win-row span {
-      color: #e8d08a;
+      color: #ff7800;
     }
 
     .win-score {
       font-size: 2.8rem;
       font-weight: 700;
-      color: #ffd700;
+      color: #ff7800;
       letter-spacing: -1px;
       font-variant-numeric: tabular-nums;
       line-height: 1;
@@ -549,6 +593,7 @@
       <span class="seed-label">Seed</span>
       <span class="seed-value" id="seedValue"></span>
       <button class="seed-copy-btn" id="seedCopyBtn">copy</button>
+      <button class="help-btn" id="helpOpenBtn" style="margin-left:auto;margin-right:18px">?</button>
     </div>
   </div>
 
@@ -594,6 +639,18 @@
       <div class="scores-label">Fastest Times</div>
       <div id="scoresByTime"></div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <div class="modal-title">Knight Battle</div>
+    <div class="help-body">
+      <p>Type where you want the knight to go.</p>
+      <p>Clear the board by <em>attacking</em> the numbers. Any numbers that are attacked are reduced by 1.</p>
+      <p><em>Do not</em> try to capture a number. Landing on a number increases its health! Just attack.</p>
+    </div>
+    <button class="modal-btn modal-btn-primary help-play-btn" id="helpPlayBtn">Play</button>
   </div>
 </div>
 
@@ -1005,6 +1062,15 @@
 
   document.getElementById('newGameBtn').addEventListener('click', newGame);
 
+  function openHelpModal() { document.getElementById('helpModal').style.display = 'flex'; }
+  function closeHelpModal() { document.getElementById('helpModal').style.display = 'none'; }
+
+  document.getElementById('helpPlayBtn').addEventListener('click', closeHelpModal);
+  document.getElementById('helpOpenBtn').addEventListener('click', openHelpModal);
+  document.getElementById('helpModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeHelpModal();
+  });
+
   document.getElementById('timerToggleBtn').addEventListener('click', () => {
     const val = document.getElementById('timerValue');
     const btn = document.getElementById('timerToggleBtn');
@@ -1072,6 +1138,10 @@
 
   document.addEventListener('keydown', (e) => {
     if (gameOver) return;
+    if (document.getElementById('helpModal').style.display !== 'none') {
+      if (e.key === 'Enter' || e.key === 'Escape') closeHelpModal();
+      return;
+    }
     if (document.getElementById('seedModal').style.display !== 'none') return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
 
