@@ -42,6 +42,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      cursor: pointer;
     }
 
     .cell.light { background: #d0d0d0; }
@@ -584,6 +585,89 @@
       margin-top: 4px;
     }
 
+    /* ── layout wrappers (transparent on desktop) ── */
+    .stats-row, .btn-row, .scores-wrap { display: contents; }
+
+    /* ── mobile ── */
+    @media (max-width: 560px) {
+      body {
+        align-items: flex-start;
+        overflow-x: hidden;
+      }
+
+      .layout {
+        flex-direction: column;
+        gap: 12px;
+        padding: 8px;
+      }
+
+      .board {
+        grid-template-columns: repeat(8, calc((100vw - 16px) / 8));
+        grid-template-rows:    repeat(8, calc((100vw - 16px) / 8));
+      }
+
+      .cell {
+        width:  calc((100vw - 16px) / 8);
+        height: calc((100vw - 16px) / 8);
+      }
+
+      .cell.hint::after { width: 11px; height: 11px; }
+
+      .knight { font-size: 2.4rem; }
+      .enemy  { font-size: 1.5rem; }
+
+      .right-panel {
+        min-width: unset;
+        width: 100%;
+        gap: 16px;
+        padding-top: 0;
+      }
+
+      h1 { font-size: 1.1rem; letter-spacing: 3px; }
+
+      .stats-row {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        width: 100%;
+        align-items: flex-start;
+      }
+
+      .position-value { font-size: 1.8rem; }
+      .turn-value     { font-size: 2.4rem; }
+      .timer-value    { font-size: 1.6rem; }
+
+      .btn-row {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .btn-row .new-game-btn {
+        flex: 1;
+        font-size: 0.72rem;
+        padding: 8px 4px;
+        letter-spacing: 0.5px;
+      }
+
+      .scores-wrap {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        width: 100%;
+      }
+
+      .scores-wrap .scores-section { flex: 1; }
+
+      .modal {
+        min-width: unset;
+        width: calc(100vw - 32px);
+      }
+
+      .win-score { font-size: 2rem; }
+    }
+
   </style>
 </head>
 <body>
@@ -602,22 +686,24 @@
   <div class="right-panel">
     <h1>Knight Battle</h1>
 
-    <div>
-      <div class="position-label">Position</div>
-      <div class="position-value" id="positionDisplay">e4</div>
-    </div>
-
-    <div>
-      <div class="turn-label">Turn</div>
-      <div class="turn-value" id="turnCounter">0</div>
-    </div>
-
-    <div>
-      <div style="display:flex;align-items:baseline;gap:10px;">
-        <div class="timer-label">Time</div>
-        <button class="seed-copy-btn" id="timerToggleBtn">Show Timer</button>
+    <div class="stats-row">
+      <div>
+        <div class="position-label">Position</div>
+        <div class="position-value" id="positionDisplay">e4</div>
       </div>
-      <div class="timer-value" id="timerValue" style="display:none">0:00.0</div>
+
+      <div>
+        <div class="turn-label">Turn</div>
+        <div class="turn-value" id="turnCounter">0</div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <div class="timer-label">Time</div>
+          <button class="seed-copy-btn" id="timerToggleBtn">Show Timer</button>
+        </div>
+        <div class="timer-value" id="timerValue" style="display:none">0:00.0</div>
+      </div>
     </div>
 
     <div id="inputGroup">
@@ -629,17 +715,21 @@
 
     <div class="win-panel" id="winPanel" style="display:none"></div>
 
-    <button class="new-game-btn" id="newGameBtn">New Game</button>
-    <button class="new-game-btn" id="loadSeedBtn">Load from seed</button>
-    <button class="new-game-btn" id="hintsToggleBtn">Hints: OFF</button>
-
-    <div class="scores-section">
-      <div class="scores-label">Best Moves</div>
-      <div id="scoresByMoves"></div>
+    <div class="btn-row">
+      <button class="new-game-btn" id="newGameBtn">New Game</button>
+      <button class="new-game-btn" id="loadSeedBtn">Load from seed</button>
+      <button class="new-game-btn" id="hintsToggleBtn">Hints: OFF</button>
     </div>
-    <div class="scores-section">
-      <div class="scores-label">Fastest Times</div>
-      <div id="scoresByTime"></div>
+
+    <div class="scores-wrap">
+      <div class="scores-section">
+        <div class="scores-label">Best Moves</div>
+        <div id="scoresByMoves"></div>
+      </div>
+      <div class="scores-section">
+        <div class="scores-label">Fastest Times</div>
+        <div id="scoresByTime"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -673,7 +763,7 @@
   const FILE_NAMES = ['a','b','c','d','e','f','g','h'];
 
   // ── high scores ── bump version string whenever game mechanics change
-  const SCORES_KEY = 'knightBattle_scores_v4';
+  const SCORES_KEY = 'knightBattle_scores_v5';
   const MAX_SCORES = 5;
 
   function loadScores() {
@@ -782,10 +872,11 @@
 
   let kFile, kRank, turnCount, pieceColor, enemies, gameOver, typedInput, currentSeed, msgTimer, showHints = false;
   let timerInterval, elapsedMs, timerStarted;
+  let rand;
 
   function initState(seed = null) {
     currentSeed = seed ?? (Math.random() * 0x100000000 >>> 0);
-    const rand = mulberry32(currentSeed);
+    rand = mulberry32(currentSeed);
 
     pieceColor = rand() < 0.5 ? 'white' : 'black';
     kFile = Math.floor(rand() * 8) + 1;
@@ -980,7 +1071,7 @@
         .filter(sq => sq.file >= 1 && sq.file <= 8 && sq.rank >= 1 && sq.rank <= 8
                       && !occupied.has(`${sq.file}-${sq.rank}`));
       if (dests.length === 0) continue;
-      const dest = dests[Math.floor(Math.random() * dests.length)];
+      const dest = dests[Math.floor(rand() * dests.length)];
       const fromFile = enemy.file;
       const fromRank = enemy.rank;
       occupied.delete(`${enemy.file}-${enemy.rank}`);
@@ -1061,6 +1152,19 @@
   }
 
   function newGame() { startGame(); }
+
+  document.getElementById('board').addEventListener('click', e => {
+    if (gameOver) return;
+    if (document.getElementById('helpModal').style.display !== 'none') return;
+    if (document.getElementById('seedModal').style.display !== 'none') return;
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    const m = cell.id.match(/^sq-(\d+)-(\d+)$/);
+    if (!m) return;
+    typedInput = '';
+    updateMoveDisplay();
+    tryMove(parseInt(m[1]), parseInt(m[2]));
+  });
 
   document.getElementById('newGameBtn').addEventListener('click', newGame);
 
