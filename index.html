@@ -13,9 +13,10 @@
       color: #eee;
       font-family: system-ui, sans-serif;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
+      padding: 24px 0;
     }
 
     .layout {
@@ -237,36 +238,6 @@
     }
 
     /* ── input ── */
-    .input-label {
-      font-size: 0.65rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #808080;
-      margin-bottom: 6px;
-    }
-
-    .move-display {
-      background: #111111;
-      border: 1px solid #383838;
-      border-radius: 6px;
-      color: #d0d0d0;
-      font-size: 1.2rem;
-      padding: 8px 14px;
-      text-align: center;
-      width: 100px;
-      letter-spacing: 4px;
-      min-height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .move-display:empty::before {
-      content: 'a1–h8';
-      color: #333333;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-    }
 
     /* ── message ── */
     .message {
@@ -471,6 +442,8 @@
       gap: 6px;
     }
 
+    #scoresByMoves, #scoresByTime { min-height: 112px; }
+
     .scores-label {
       font-size: 0.65rem;
       letter-spacing: 3px;
@@ -591,8 +564,8 @@
     /* ── mobile ── */
     @media (max-width: 560px) {
       body {
-        align-items: flex-start;
         overflow-x: hidden;
+        padding: 8px 0;
       }
 
       .layout {
@@ -706,11 +679,6 @@
       </div>
     </div>
 
-    <div id="inputGroup">
-      <div class="input-label">Move to</div>
-      <div class="move-display" id="moveDisplay"></div>
-    </div>
-
     <div class="message hidden" id="message">Illegal move</div>
 
     <div class="win-panel" id="winPanel" style="display:none"></div>
@@ -738,7 +706,7 @@
   <div class="modal">
     <div class="modal-title">Knight Battle</div>
     <div class="help-body">
-      <p>Type where you want the knight to go.</p>
+      <p>Click or tap where you want the knight to go.</p>
       <p>Clear the board by <em>attacking</em> the numbers. Any numbers that are attacked are reduced by 1.</p>
       <p><em>Do not</em> try to capture a number. Landing on a number increases its health! Just attack.</p>
     </div>
@@ -870,7 +838,7 @@
   const GLOW_MS  = 400;
   const FADE_MS  = 250;
 
-  let kFile, kRank, turnCount, pieceColor, enemies, gameOver, typedInput, currentSeed, msgTimer, showHints = false;
+  let kFile, kRank, turnCount, pieceColor, enemies, gameOver, currentSeed, msgTimer, showHints = false;
   let timerInterval, elapsedMs, timerStarted;
   let rand;
 
@@ -883,7 +851,6 @@
     kRank = Math.floor(rand() * 8) + 1;
     turnCount = 0;
     gameOver = false;
-    typedInput = '';
     clearInterval(timerInterval);
     timerInterval = null;
     elapsedMs = 0;
@@ -1044,7 +1011,6 @@
   function showWin() {
     gameOver = true;
     stopTimer();
-    document.getElementById('inputGroup').style.display = 'none';
     document.getElementById('message').classList.add('hidden');
 
     const panel = document.getElementById('winPanel');
@@ -1144,9 +1110,6 @@
     render(false);
     document.getElementById('message').classList.add('hidden');
     document.getElementById('winPanel').style.display = 'none';
-    document.getElementById('inputGroup').style.display = '';
-    typedInput = '';
-    updateMoveDisplay();
     updateSeedDisplay();
     updateTimerDisplay();
   }
@@ -1161,8 +1124,6 @@
     if (!cell) return;
     const m = cell.id.match(/^sq-(\d+)-(\d+)$/);
     if (!m) return;
-    typedInput = '';
-    updateMoveDisplay();
     tryMove(parseInt(m[1]), parseInt(m[2]));
   });
 
@@ -1238,46 +1199,9 @@
   });
 
   // ── keyboard input ─────────────────────────────────────────────────────────
-  function updateMoveDisplay() {
-    document.getElementById('moveDisplay').textContent = typedInput;
-  }
-
   document.addEventListener('keydown', (e) => {
-    if (gameOver) return;
     if (document.getElementById('helpModal').style.display !== 'none') {
       if (e.key === 'Enter' || e.key === 'Escape') closeHelpModal();
-      return;
-    }
-    if (document.getElementById('seedModal').style.display !== 'none') return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-    if (e.key === 'Backspace') {
-      typedInput = typedInput.slice(0, -1);
-      updateMoveDisplay();
-      return;
-    }
-
-    if (e.key.length !== 1) return;
-    const ch = e.key.toLowerCase();
-
-    if (typedInput.length === 0) {
-      if (!'abcdefgh'.includes(ch)) return; // silently ignore non-file keys
-      typedInput = ch;
-      updateMoveDisplay();
-    } else {
-      typedInput += ch;
-      updateMoveDisplay();
-      const m = typedInput.match(/^([a-h])([1-8])$/);
-      if (m) {
-        typedInput = '';
-        updateMoveDisplay();
-        tryMove(m[1].charCodeAt(0) - 96, parseInt(m[2]));
-      } else {
-        typedInput = '';
-        updateMoveDisplay();
-        flashMessage('Not a legal knight move');
-        render(true);
-      }
     }
   });
 
