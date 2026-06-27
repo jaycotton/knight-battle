@@ -186,23 +186,6 @@
       text-transform: uppercase;
     }
 
-    /* ── position display ── */
-    .position-label {
-      font-size: 0.65rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #808080;
-    }
-
-    .position-value {
-      font-size: 2.4rem;
-      font-weight: 700;
-      color: #ff7800;
-      letter-spacing: 4px;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-    }
-
     /* ── turn counter ── */
     .turn-label {
       font-size: 0.65rem;
@@ -664,11 +647,6 @@
 
     <div class="stats-row">
       <div>
-        <div class="position-label">Position</div>
-        <div class="position-value" id="positionDisplay">e4</div>
-      </div>
-
-      <div>
         <div class="turn-label">Turn</div>
         <div class="turn-value" id="turnCounter">0</div>
       </div>
@@ -687,7 +665,8 @@
     <div class="win-panel" id="winPanel" style="display:none"></div>
 
     <div class="btn-row">
-      <button class="new-game-btn" id="newGameBtn">New Game</button>
+      <button class="new-game-btn" id="newGameBtn">Play New Board</button>
+      <button class="new-game-btn" id="replayBtn">Replay Same Board</button>
       <button class="new-game-btn" id="loadSeedBtn">Load from seed</button>
       <button class="new-game-btn" id="hintsToggleBtn">Hints: OFF</button>
     </div>
@@ -959,8 +938,7 @@
       knight.classList.add('on-enemy');
 
     cell.appendChild(knight);
-    document.getElementById('positionDisplay').textContent = toAlgebraic(kFile, kRank);
-    document.getElementById('turnCounter').textContent = turnCount;
+document.getElementById('turnCounter').textContent = turnCount;
   }
 
   // ── message flash ──────────────────────────────────────────────────────────
@@ -1132,6 +1110,7 @@
   });
 
   document.getElementById('newGameBtn').addEventListener('click', newGame);
+  document.getElementById('replayBtn').addEventListener('click', () => startGame(currentSeed));
 
   function openHelpModal() { document.getElementById('helpModal').style.display = 'flex'; }
   function closeHelpModal() { document.getElementById('helpModal').style.display = 'none'; }
