@@ -1021,6 +1021,7 @@
       <div class="win-row">time — <span>${formatTime(elapsedMs)}</span></div>`;
     panel.style.display = 'flex';
     renderScores({ moves: turnCount, timeMs: elapsedMs });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function moveSomeEnemies(toMove, extraOccupied = []) {
