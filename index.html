@@ -572,6 +572,9 @@
         flex-direction: column;
         gap: 12px;
         padding: 8px;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
       }
 
       .board {
@@ -592,6 +595,8 @@
       .right-panel {
         min-width: unset;
         width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
         gap: 16px;
         padding-top: 0;
       }
@@ -626,12 +631,10 @@
 
       .scores-wrap {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 16px;
         width: 100%;
       }
-
-      .scores-wrap .scores-section { flex: 1; }
 
       .modal {
         min-width: unset;
